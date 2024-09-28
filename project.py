@@ -11,6 +11,7 @@ class PriceMachine:
 
     def __init__(self):
         self.data = []
+        self.search_results = []  # Список для хранения всех результатов поиска
 
     def load_prices(self, file_path: str) -> List[Dict]:
         """
@@ -59,7 +60,7 @@ class PriceMachine:
             <title>Позиции продуктов</title>
         </head>
         <body>
-            <table border='1'>
+            <table border='0'>
                 <tr>
                     <th>Номер</th>
                     <th>Название</th>
@@ -69,7 +70,7 @@ class PriceMachine:
                     <th>Цена за кг.</th>
                 </tr>
         '''
-        for idx, item in enumerate(sorted(self.data, key=lambda x: x["цена за кг"]), start=1):
+        for idx, item in enumerate(sorted(self.data, key=lambda x: (x["наименование"], x["цена за кг"])), start=1):
             result += f'''
                 <tr>
                     <td>{idx}</td>
@@ -95,7 +96,53 @@ class PriceMachine:
         for item in self.data:
             if text.lower() in item['наименование'].lower():
                 results.append(item)
-        return sorted(results, key=lambda x: x["цена за кг"])
+        return sorted(results, key=lambda x: (x["наименование"], x["цена за кг"]))
+
+    def export_search_results_to_html(self, results: List[Dict], fname: str = 'output_search.html') -> str:
+        """Экспортирует результаты поиска в HTML файл."""
+        if not results:
+            return ""
+
+        # Сортируем результаты по названию и цене за кг
+        sorted_results = sorted(results, key=lambda x: (x["наименование"], x["цена за кг"]))
+
+        # Перезаписываем файл при каждом запуске
+        with open(fname, 'w', encoding='utf-8') as html_file:
+            html_file.write('''
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Результаты поиска</title>
+            </head>
+            <body>
+                <table border='0'>
+                    <tr>
+                        <th>Номер</th>
+                        <th>Название</th>
+                        <th>Цена</th>
+                        <th>Фасовка</th>
+                        <th>Файл</th>
+                        <th>Цена за кг.</th>
+                    </tr>
+            ''')
+            for idx, item in enumerate(sorted_results, start=1):
+                html_file.write(f'''
+                    <tr>
+                        <td>{idx}</td>
+                        <td>{item['наименование']}</td>
+                        <td>{item['цена']}</td>
+                        <td>{item['вес']}</td>
+                        <td>{item['файл']}</td>
+                        <td>{item['цена за кг']:.2f}</td>
+                    </tr>
+                ''')
+            html_file.write('''
+                </table>
+            </body>
+            </html>
+            ''')
+
+        return ""
 
     def interactive_search(self):
         """Интерактивный поиск товаров."""
@@ -110,8 +157,12 @@ class PriceMachine:
                 for idx, item in enumerate(results, start=1):
                     print(
                         f"{idx:<5}{item['наименование']:<40}{item['цена']:<10.2f}{item['вес']:<10.2f}{item['файл']:<15}{item['цена за кг']:<10.2f}")
+                self.search_results.extend(results)  # Добавляем результаты в общий список
             else:
                 print("Ничего не найдено.")
+
+        # Экспортируем все результаты поиска в файл
+        self.export_search_results_to_html(self.search_results)
 
 
 if __name__ == "__main__":
