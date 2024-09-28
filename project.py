@@ -4,14 +4,13 @@ from typing import List, Dict, Optional
 
 
 class PriceMachine:
-    # Константы для допустимых названий столбцов
     PRODUCT_KEYS = ["название", "продукт", "товар", "наименование"]
     PRICE_KEYS = ["цена", "розница"]
     WEIGHT_KEYS = ["фасовка", "масса", "вес"]
 
     def __init__(self):
         self.data = []
-        self.search_results = []  # Список для хранения всех результатов поиска
+        self.search_results = []
 
     def load_prices(self, file_path: str) -> List[Dict]:
         """
@@ -103,10 +102,8 @@ class PriceMachine:
         if not results:
             return ""
 
-        # Сортируем результаты по названию и цене за кг
         sorted_results = sorted(results, key=lambda x: (x["наименование"], x["цена за кг"]))
 
-        # Перезаписываем файл при каждом запуске
         with open(fname, 'w', encoding='utf-8') as html_file:
             html_file.write('''
             <!DOCTYPE html>
@@ -157,11 +154,10 @@ class PriceMachine:
                 for idx, item in enumerate(results, start=1):
                     print(
                         f"{idx:<5}{item['наименование']:<40}{item['цена']:<10.2f}{item['вес']:<10.2f}{item['файл']:<15}{item['цена за кг']:<10.2f}")
-                self.search_results.extend(results)  # Добавляем результаты в общий список
+                self.search_results.extend(results)
             else:
                 print("Ничего не найдено.")
 
-        # Экспортируем все результаты поиска в файл
         self.export_search_results_to_html(self.search_results)
 
 
