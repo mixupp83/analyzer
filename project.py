@@ -1,47 +1,35 @@
 import os
 import csv
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 
 class PriceMachine:
+    # Константы для допустимых названий столбцов
+    PRODUCT_KEYS = ["название", "продукт", "товар", "наименование"]
+    PRICE_KEYS = ["цена", "розница"]
+    WEIGHT_KEYS = ["фасовка", "масса", "вес"]
 
     def __init__(self):
         self.data = []
-        self.result = ''
-        self.name_length = 0
 
     def load_prices(self, file_path: str) -> List[Dict]:
-        '''
-            Сканирует указанный каталог. Ищет файлы со словом price в названии.
-            В файле ищет столбцы с названием товара, ценой и весом.
-            Допустимые названия для столбца с товаром:
-                товар
-                название
-                наименование
-                продукт
-
-            Допустимые названия для столбца с ценой:
-                розница
-                цена
-
-            Допустимые названия для столбца с весом (в кг.)
-                вес
-                масса
-                фасовка
-        '''
+        """
+        Сканирует указанный каталог. Ищет файлы со словом 'price' в названии.
+        В файле ищет столбцы с названием товара, ценой и весом.
+        """
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"Папка не найдена: {file_path}")
 
         for filename in os.listdir(file_path):
-            if 'price' in filename:
+            if 'price' in filename.lower():
                 file_path_full = os.path.join(file_path, filename)
                 try:
                     with open(file_path_full, 'r', encoding='utf-8') as file:
                         reader = csv.DictReader(file, delimiter=',')
                         for row in reader:
-                            product_name = self._get_value(row, ["название", "продукт", "товар", "наименование"])
-                            price = self._get_value(row, ["цена", "розница"])
-                            weight = self._get_value(row, ["фасовка", "масса", "вес"])
+                            product_name = self._get_value(row, self.PRODUCT_KEYS)
+                            price = self._get_value(row, self.PRICE_KEYS)
+                            weight = self._get_value(row, self.WEIGHT_KEYS)
                             if product_name and price and weight:
                                 self.data.append({
                                     "наименование": product_name,
@@ -54,13 +42,16 @@ class PriceMachine:
                     print(f"Ошибка при чтении файла {filename}: {e}")
         return self.data
 
-    def _get_value(self, item: Dict[str, str], keys: List[str]) -> str:
+    @staticmethod
+    def _get_value(item: Dict[str, str], keys: List[str]) -> Optional[str]:
+        """Возвращает значение из словаря по одному из ключей."""
         for key in keys:
             if key in item:
                 return item[key]
         return None
 
     def export_to_html(self, fname: str = 'output.html') -> str:
+        """Экспортирует данные в HTML файл."""
         result = '''
         <!DOCTYPE html>
         <html>
@@ -68,7 +59,7 @@ class PriceMachine:
             <title>Позиции продуктов</title>
         </head>
         <body>
-            <table border='0'>
+            <table border='1'>
                 <tr>
                     <th>Номер</th>
                     <th>Название</th>
@@ -99,6 +90,7 @@ class PriceMachine:
         return result
 
     def find_text(self, text: str) -> List[Dict]:
+        """Ищет товары по указанному тексту в названии."""
         results = []
         for item in self.data:
             if text.lower() in item['наименование'].lower():
@@ -106,6 +98,7 @@ class PriceMachine:
         return sorted(results, key=lambda x: x["цена за кг"])
 
     def interactive_search(self):
+        """Интерактивный поиск товаров."""
         while True:
             search_text = input("Введите текст для поиска (или 'exit' для выхода): ")
             if search_text.lower() == 'exit':
@@ -125,7 +118,7 @@ if __name__ == "__main__":
     folder_path = input("Введите путь к папке с файлами: ")
     pm = PriceMachine()
     try:
-        print(pm.load_prices(file_path=folder_path))
+        pm.load_prices(file_path=folder_path)
         pm.export_to_html()
         pm.interactive_search()
     except Exception as e:
