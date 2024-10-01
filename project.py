@@ -56,6 +56,7 @@ class PriceMachine:
         <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="utf-8">
             <title>Позиции продуктов</title>
         </head>
         <body>
@@ -109,6 +110,7 @@ class PriceMachine:
             <!DOCTYPE html>
             <html>
             <head>
+                <meta charset="utf-8">
                 <title>Результаты поиска</title>
             </head>
             <body>
